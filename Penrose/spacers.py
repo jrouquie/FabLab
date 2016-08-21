@@ -101,6 +101,7 @@ def tetris_pack(geoms, width, stepx, stepy, nb_orientations):
                 yoff=starting_yoffs[x] # no need to check lower than that
                 geom_yshifted = geom_xshifted
                 while simplified_result_prepared.intersects(geom_yshifted): # move the piece up until it fits
+                    # (a better test would be not(.disjoint) or .touches)
                     yoff += stepy
                     geom_yshifted = shapely.affinity.translate(geom_xshifted, xoff=0, yoff=yoff)
                 possible_positions.append({'x':x, 'yoff':yoff, 'maxy':yoff+maxy-miny, 'geom':geom_yshifted})
@@ -123,7 +124,7 @@ def tetris_pack(geoms, width, stepx, stepy, nb_orientations):
 
 ####################
 # Here are a few more choices for the user
-to_place = lozenges(nb_repetitions=13) + spacers(nb_repetitions=2)
+to_place = lozenges(nb_repetitions=16) + spacers(nb_repetitions=2)
 
 # quick run for debugging:
 # to_place = spacers(); random.shuffle(to_place); paperwidth = paperwidth/3
