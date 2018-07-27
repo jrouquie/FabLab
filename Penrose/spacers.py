@@ -1,9 +1,17 @@
 #!/usr/bin/python
 # coding: utf-8
+
 # The goal of this code is to generate suitable spacers (/croisillons/) to make a physical Penrose tiling in a bathroom.
 # (We can't use the generic cross-shaped spacers...)
 # Inspired by http://images.math.cnrs.fr/Un-parquet-de-Penrose.html where (wooden) tiles touch each other,
 # but here we need a small space between tiles (we chose 3mm) and thus those spacers.
+
+# requirements:
+# sudo apt install python-setuptools python-rsvg
+# sudo pip install shapely
+# no longer needed for manual install: librsvg-dev libgeos-dev
+
+# /usr/bin/python2 spacers.py
 
 ################################################################################
 # params
@@ -11,19 +19,24 @@ scale = 100/35.27 # This scales 1 svg unit (pixel) to 1mm
 grout_width = scale * 3 # 3mm (french for grout is /joint/)
 spacer_length = grout_width * 4
 lozenge_fat_width = scale * 50
-paperwidth, paperheight = 297*scale, 420*scale   # A3. «paper» will actually be Plexiglas.
+# paperwidth, paperheight = 498*scale, 304*scale   # «paper» will actually be Plexiglas.
+paperwidth, paperheight = 293*scale, 80*scale   # «paper» will actually be Plexiglas.
+# nb_repetitions_lozenges = 18 # how many pairs of slim+fat lozenge to place on paper
+nb_repetitions_lozenges = 0 # how many pairs of slim+fat lozenge to place on paper
+nb_repetitions_spacers  = 1  # how many sets of 64 spacers to place on paper
 
 ################################################################################
 # imports
 import math, random, sys
 import cairo # the alternative library cairocffi seems not supported by rsvg.Handle.render_cairo()
-import rsvg  # sudo apt-get install librsvg-dev python-rsvg
+import rsvg
 import xml.etree.ElementTree as ET
 
 # We use shapely for high level geometry computations.
 # Another Python geometry package, sympy, does symbolic computation and is said to get slow.
-# To install: sudo apt-get install libgeos-dev
 import shapely.geometry, shapely.affinity, shapely.prepared
+import shapely.speedups
+shapely.speedups.enable() # Should be done by default whenever shapely.speedups.available
 
 ################################################################################
 # Build the shapes
@@ -91,6 +104,7 @@ def tetris_pack(geoms, width, stepx, stepy, nb_orientations):
     nb_stepx = int(width/stepx)
     starting_yoffs = [0] * nb_stepx # "water level": a lower bound on the height of already fallen pieces, in each column
     nb_placed = 0                   # to report progress to the user
+    global_maxy = 0
     for geom in geoms:              # place each piece one by one
         possible_positions = []
         for i in range(nb_orientations): # try all orientations
@@ -119,12 +133,13 @@ def tetris_pack(geoms, width, stepx, stepy, nb_orientations):
 
         simplified_result_prepared = shapely.prepared.prep(simplified_result) # this makes intersection tests more efficient
         nb_placed+=1
-        sys.stdout.write("\rPlaced:{}".format(nb_placed)); sys.stdout.flush()
+        global_maxy = max(maxy, global_maxy)
+        sys.stdout.write("\rPlaced:{}, current max y: {:.0f}mm".format(nb_placed, global_maxy/scale)); sys.stdout.flush()
     return result
 
 ####################
-# Here are a few more choices for the user
-to_place = lozenges(nb_repetitions=16) + spacers(nb_repetitions=2)
+to_place = lozenges(nb_repetitions=nb_repetitions_lozenges) + spacers(nb_repetitions=nb_repetitions_spacers)
+random.seed(); random.shuffle(to_place);
 
 # quick run for debugging:
 # to_place = spacers(); random.shuffle(to_place); paperwidth = paperwidth/3
@@ -156,7 +171,7 @@ def render_shapely_to_cairo(geom, context):
 
 for surface in [
         cairo.PDFSurface("spacers.pdf", paperwidth, paperheight),
-        cairo.PSSurface ("spacers.ps",  paperwidth, paperheight),
+        # cairo.PSSurface ("spacers.ps",  paperwidth, paperheight),
         cairo.SVGSurface("spacers.svg", paperwidth, paperheight)]:
     ctx = cairo.Context(surface)
     render_shapely_to_cairo(packing, ctx)
