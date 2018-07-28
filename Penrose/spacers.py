@@ -7,20 +7,18 @@
 # but here we need a small space between tiles (we chose 3mm) and thus those spacers.
 
 # requirements:
-# sudo apt install python-setuptools python-rsvg
-# sudo pip install shapely
-# no longer needed for manual install: librsvg-dev libgeos-dev
+# sudo apt install gir1.2-rsvg-2.0 python3-cairo python-gobject-2-dev python-gi-cairo
+# pip2 install shapely
 
 # /usr/bin/python2 spacers.py
+scale = 100/35.27 # This scales 1 svg unit (pixel) to 1mm
 
 ################################################################################
 # params
-scale = 100/35.27 # This scales 1 svg unit (pixel) to 1mm
+paperwidth, paperheight = 163 *scale, 27 *scale   # as mm. «paper» will actually be Plexiglas.
 grout_width = scale * 3 # 3mm (french for grout is /joint/)
 spacer_length = grout_width * 4
 lozenge_fat_width = scale * 50
-# paperwidth, paperheight = 498*scale, 304*scale   # «paper» will actually be Plexiglas.
-paperwidth, paperheight = 293*scale, 80*scale   # «paper» will actually be Plexiglas.
 # nb_repetitions_lozenges = 18 # how many pairs of slim+fat lozenge to place on paper
 nb_repetitions_lozenges = 0 # how many pairs of slim+fat lozenge to place on paper
 nb_repetitions_spacers  = 1  # how many sets of 64 spacers to place on paper
@@ -29,7 +27,11 @@ nb_repetitions_spacers  = 1  # how many sets of 64 spacers to place on paper
 # imports
 import math, random, sys
 import cairo # the alternative library cairocffi seems not supported by rsvg.Handle.render_cairo()
-import rsvg
+
+# import rsvg
+# `gi.repository` is a special Python package that dynamically generates objects 
+from gi.repository import Rsvg
+
 import xml.etree.ElementTree as ET
 
 # We use shapely for high level geometry computations.
@@ -166,7 +168,7 @@ def render_shapely_to_cairo(geom, context):
     minx, miny, maxx, maxy = geom.bounds
     svg = fix_svg(geom.svg())
     svg = '<svg viewBox="{} {} {} {}">'.format(minx,miny,maxx,maxy) + svg + '</svg>'
-    svg = rsvg.Handle(data=svg)
+    svg = Rsvg.Handle.new_from_data(svg)
     svg.render_cairo(context)
 
 for surface in [

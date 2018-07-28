@@ -114,8 +114,9 @@ For paper cutting:
 
   - one sheet of 205g paper:
 
+      - vp  6, vs 30: rear side has some marks. I'll try to add a sheet of 80g paper on the rear side to avoid that.
       - vp 10, vs 30: rear side has serious brown marks, front side is fine.
-      - vs 70: some circular cuts are wiggly. Reducing speed to vs=30 makes it better.
+      -        vs 70: some circular cuts are wiggly. Reducing speed to vs=30 makes it better.
 
 ## Usage
 
